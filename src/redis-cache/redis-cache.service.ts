@@ -8,7 +8,11 @@ export class RedisCacheService {
   message: string;
 
   constructor() {
-    this.redisClient = Redis.createClient();
+    console.log(process.env.REDIS_HOST);
+    console.log(process.env.REDIS_PORT);
+    this.redisClient = Redis.createClient({
+      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    });
     this.subscriber = this.redisClient.duplicate();
 
     (async () => {
