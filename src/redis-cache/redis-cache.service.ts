@@ -5,6 +5,7 @@ import * as Redis from 'redis';
 export class RedisCacheService {
   private redisClient: Redis.RedisClientType;
   private subscriber: Redis.RedisClientType;
+  private publisher: Redis.RedisClientType;
   message: string;
 
   constructor() {
@@ -14,13 +15,16 @@ export class RedisCacheService {
       url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
     });
     this.subscriber = this.redisClient.duplicate();
+    this.publisher = this.redisClient.duplicate();
 
     (async () => {
       await this.redisClient.connect();
       await this.subscriber.connect();
-      await this.subscriber.subscribe('hello', (msg: string) => {
+      await this.publisher.connect();
+      await this.subscriber.subscribe('hello', async (msg: string) => {
         console.log(msg);
         this.message = msg;
+        await this.publisher.publish('world', `Hello dari server :D! ${msg}`);
       });
     })();
   }
