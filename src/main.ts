@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { RedisCacheModule } from './redis-cache/redis-cache.module';
 import { RedisCacheService } from './redis-cache/redis-cache.service';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -7,11 +8,13 @@ async function bootstrap() {
     console.log(`Server running on port ${process.env.PORT || 8080}`);
   });
 
-  const Redis = new RedisCacheService();
-  const redisClient = Redis.getRedisClient();
+  const Redis = await NestFactory.create(RedisCacheModule);
+  const redisClient = Redis.get(RedisCacheService).getRedisClient();
   redisClient.on('connect', async () => {
     console.log('Connected to redis server');
-    const data = await Redis.getRedisClient().get('name');
+    const data = await Redis.get(RedisCacheService)
+      .getRedisClient()
+      .get('name');
     console.log(data);
   });
 
