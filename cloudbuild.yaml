@@ -1,0 +1,25 @@
+steps:
+  # build image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/sql-server:$COMMIT_SHA', '.']
+
+  # push image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/sql-server:$COMMIT_SHA']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run',
+        'deploy',
+        'sql-server',
+        '--image',
+        'gcr.io/$PROJECT_ID/sql-server:$COMMIT_SHA',
+        '--region',
+        'asia-southeast2',
+        '--allow-unauthenticated',
+      ]
+
+images:
+  - gcr.io/$PROJECT_ID/sql-server
