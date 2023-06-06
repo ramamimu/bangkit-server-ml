@@ -1,35 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import * as Mysql from 'promise-mysql';
+import * as Mysql from 'mysql';
 
 @Injectable()
 export class MysqlDbService {
-  private db: Promise<Mysql.Pool>;
-
+  private db: Mysql.Connection;
   constructor() {
-    if (process.env.MODE === 'deployment') {
-      this.initDb();
-    }
-  }
+    this.db = Mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
 
-  private async initDb(): Promise<void> {
-    try {
-      this.db = Mysql.createPool({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME,
+    this.db.connect((err) => {
+      if (err) throw err;
+      console.log('Connected!');
+      this.db.query('show tables', (err, result) => {
+        if (err) throw err;
+        console.log(result);
       });
-      console.log('Connected to MySQL DB');
-      const data = await this.selectData('SELECT * FROM OperationHours');
-      console.log(data);
-    } catch (error) {
-      console.error('Error connecting to MySQL DB:', error);
-    }
+    });
   }
 
-  async selectData(query: string): Promise<any[]> {
-    const connection = await this.db;
-    const result = await connection.query(query);
-    return result;
+  getDb(): Mysql.Connection {
+    return this.db;
   }
 }
