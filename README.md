@@ -1,7 +1,3 @@
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
 ## Installation
 
 ```bash
@@ -21,19 +17,11 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Test
+## How to connect MySQL
 
 ```bash
-# unit tests
-$ npm run test
+gcloud run services update SERVICE_NAME \
+--add-cloudsql-instances=INSTANCE_CONNECTION_NAME
 
-# e2e tests
-$ npm run test:e2e
 
-# test coverage
-$ npm run test:cov
 ```
-
-## License
-
-Nest is [MIT licensed](LICENSE).

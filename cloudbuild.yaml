@@ -1,8 +1,4 @@
 steps:
-  # build redis image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/redis:latest', './redis/.']
-
   # build image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/sql-server:$COMMIT_SHA', '.']
@@ -10,10 +6,6 @@ steps:
   # push image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/sql-server:$COMMIT_SHA']
-
-  # push image redis
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/redis:latest']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud

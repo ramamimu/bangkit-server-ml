@@ -21,12 +21,11 @@ export class RedisCacheService {
       await this.redisClient.connect();
       await this.subscriber.connect();
       await this.publisher.connect();
-      await this.subscriber.subscribe('hello', async (msg: string) => {
-        console.log(msg);
-        this.message = msg;
-        await this.publisher.publish('world', `Hello dari server :D! ${msg}`);
-      });
     })();
+  }
+
+  setMessage(msg: string) {
+    this.message = msg;
   }
 
   getRedisClient(): Redis.RedisClientType {
@@ -35,6 +34,10 @@ export class RedisCacheService {
 
   getSubscriber(): Redis.RedisClientType {
     return this.subscriber;
+  }
+
+  getPublisher(): Redis.RedisClientType {
+    return this.publisher;
   }
 
   getMessage(): string {
