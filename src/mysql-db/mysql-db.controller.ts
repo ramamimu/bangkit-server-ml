@@ -53,7 +53,6 @@ export class MysqlDbController {
     const query =
       'SELECT place_id,name,Latitude,Longitude,OverallRating, UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places ORDER BY RAND() LIMIT 5';
     let data: Place[];
-    let places: any;
     try {
       data = (await this.mysqlDbService.getQuery(query)) as Place[];
       for (const place of data) {
@@ -61,22 +60,16 @@ export class MysqlDbController {
           const photoReference: string = (await this.getPlacePhotoReference(
             place.place_id,
           )) as string;
-          place.photoReference = photoReference;
-          console.log('data index: ', place);
-          console.log('photoReference: ', photoReference);
-          console.log('place id: ', place.place_id);
+          const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
+          place.photoReference = url;
         } catch {
           place.photoReference = '';
           console.log('error while getting photo reference');
         }
       }
-
-      console.log('data: ', data);
-      // const placesWithPhotoReference = await Promise.all(places);
-      // console.log('placesWithPhotoReference: ', placesWithPhotoReference);
-      console.log('places: ', places);
     } catch {
       error = true;
+      console.log('error while getting recomendation place');
     }
     return {
       error,
@@ -100,13 +93,6 @@ export class MysqlDbController {
         };
       } = response.data;
       if (data.status !== 'OK') reject('error while get place photo reference');
-      console.log('id: ', placeId);
-      // console.log('data.result.photos: ', data.result.photos);
-      // check if data.result.photos is exist
-
-      if (data.result.photos == undefined) {
-        console.log('undefineedd??');
-      }
       if (data.result.photos !== undefined)
         resolve(data.result.photos[0].photo_reference);
       else reject('error while get place photo reference');
