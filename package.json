@@ -26,6 +26,7 @@
     "@nestjs/core": "^9.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^9.0.0",
+    "axios": "^1.4.0",
     "cache-manager": "^5.2.1",
     "cache-manager-redis-store": "^3.0.1",
     "mysql": "^2.18.1",

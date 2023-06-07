@@ -7,5 +7,6 @@ import { RedisCacheController } from './redis-cache.controller';
   imports: [ConfigModule.forRoot()],
   providers: [RedisCacheService],
   controllers: [RedisCacheController],
+  exports: [RedisCacheService],
 })
 export class RedisCacheModule {}
