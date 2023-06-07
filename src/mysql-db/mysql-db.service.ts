@@ -13,23 +13,24 @@ export class MysqlDbService {
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
     });
-
-    console.log(this.getQuery('show tables'));
   }
 
-  async getQuery(query: string): Promise<string> {
-    let data = '';
-    await this.db.getConnection((err, connection) => {
-      if (err) throw err;
-      console.log('Connected!');
-      connection.query(query, (err, result) => {
-        if (err) throw err;
-        data = result;
-        console.log(result);
+  async getQuery(query: string) {
+    return new Promise((resolve, reject) => {
+      this.db.getConnection((err, connection) => {
+        if (err) {
+          console.log('error get connection');
+          reject(err);
+        }
+        connection.query(query, (err, result) => {
+          if (err) {
+            console.log('error get query');
+            reject(err);
+          }
+          resolve(result);
+        });
+        connection.release();
       });
-      connection.release();
     });
-
-    return data;
   }
 }
