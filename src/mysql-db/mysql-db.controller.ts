@@ -7,8 +7,9 @@ export class MysqlDbController {
 
   @Get()
   getHello(): string {
-    return 'controller sql db';
+    return 'Welcome to C23-PR513 API management!';
   }
+
   @Post('query')
   async getQuery(@Body() body: { query: string }) {
     let error = false;
