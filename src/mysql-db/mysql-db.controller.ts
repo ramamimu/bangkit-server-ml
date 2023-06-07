@@ -56,10 +56,26 @@ export class MysqlDbController {
     try {
       data = (await this.mysqlDbService.getQuery(query)) as Place[];
       for (const place of data) {
+        let referenceBuffer: string | null;
         try {
-          const photoReference: string = (await this.getPlacePhotoReference(
-            place.place_id,
-          )) as string;
+          const stringId = 'photo-reference:' + place.place_id;
+          referenceBuffer = await this.redisCacheService.getCache(stringId);
+        } catch {
+          console.log('error while getting referenceBuffer');
+        }
+        try {
+          let photoReference: string;
+          if (!referenceBuffer) {
+            photoReference = (await this.getPlacePhotoReference(
+              place.place_id,
+            )) as string;
+            await this.redisCacheService.setCache(
+              `photo-reference:${place.place_id}`,
+              photoReference,
+            );
+          } else {
+            photoReference = referenceBuffer;
+          }
           const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
           place.photoReference = url;
         } catch {
@@ -76,6 +92,28 @@ export class MysqlDbController {
       data,
     };
   }
+
+  @Get('redis')
+  async getRedis() {
+    let error = false;
+    let data: any;
+    try {
+      data = await this.redisCacheService.getCache(
+        'photo-reference:ChIJ1d9wAUtYei4R-z0FAHihfvo',
+      );
+    } catch {
+      error = true;
+    }
+    console.log(error ? 'failed get redis data' : 'success get redis data');
+    return {
+      error,
+      data,
+    };
+  }
+
+  // =================== //
+  //  Ordinary Function  //
+  // =================== //
 
   async getPlacePhotoReference(placeId: string) {
     return new Promise(async (resolve, reject) => {

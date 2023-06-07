@@ -7,6 +7,6 @@ export class RedisCacheController {
 
   @Get('/')
   getHello(): string {
-    return this.redisCacheService.getMessage();
+    return 'hello, you are in redis management';
   }
 }
