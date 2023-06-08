@@ -104,7 +104,7 @@ GET /api/detail-place/:place_id
     {
       Place_ID: string,
       Name: string,
-      FormattedPhone: string,
+      FormattedPhone: string | null,
       FormattedAddress: string | null,
       Latitude: number,
       Longitude: number,
@@ -116,15 +116,15 @@ GET /api/detail-place/:place_id
       Regency: string | null,
       Province: string | null,
       PostalNumber: string | null,
-      images:[string],
+      images: [ string ],
       open: string | null,
       close: string | null,
     }
   ],
   tags: [
     {
-      categories:[string],
-      services:[string],
+      categories: [ string ],
+      services: [ string ],
     }
   ],
   reviews: [

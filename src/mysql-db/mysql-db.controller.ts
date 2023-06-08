@@ -171,6 +171,10 @@ export class MysqlDbController {
       Province: string;
       PostalNumber: string;
       FormattedPhone: string;
+      Latitude: number;
+      Longitude: number;
+      OverallRating: number;
+      UserRatingTotal: number;
     };
     type Categories = {
       ServesBeer: boolean;
@@ -333,11 +337,11 @@ export class MysqlDbController {
 
     // get photo reference
     try {
-      const photoReferences = (await this.getPlacePhotoReference(
-        id,
-      )) as string[];
-      for (const photoReference in photoReferences) {
-        const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
+      const photoReferences = (await this.getPlacePhotoReference(id)) as {
+        photo_reference: string;
+      }[];
+      for (const photoReference of photoReferences) {
+        const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference.photo_reference}&key=${process.env.MAPS_API_KEY}`;
         images.push(url);
       }
       if (images.length === 0) {
@@ -348,12 +352,45 @@ export class MysqlDbController {
       return this.writeErrorMessage('Place not found');
     }
 
-    // logic DataAPI
+    const {
+      Place_ID,
+      Name,
+      FormattedAddress,
+      StreetAddress,
+      District,
+      City,
+      Regency,
+      Province,
+      PostalNumber,
+      FormattedPhone,
+      Latitude,
+      Longitude,
+      OverallRating,
+      UserRatingTotal,
+    } = detailPlace[0];
+
+    const detailPlaceFinal = {
+      Place_ID,
+      Name,
+      FormattedAddress,
+      StreetAddress,
+      District,
+      City,
+      Regency,
+      Province,
+      PostalNumber,
+      FormattedPhone,
+      Latitude,
+      Longitude,
+      OverallRating,
+      UserRatingTotal,
+    };
+
     const dataAPI: DataAPI = {
       error: false,
       overview: [
         {
-          ...detailPlace[0],
+          ...detailPlaceFinal,
           images,
           open,
           close,
