@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { MysqlDbService } from './mysql-db.service';
 import { RedisCacheService } from '../redis-cache/redis-cache.service';
 import axios from 'axios';
+import { nanoid } from 'nanoid';
 
 @Controller('api')
 export class MysqlDbController {
@@ -262,7 +263,7 @@ export class MysqlDbController {
     ];
 
     try {
-      // select available detail
+      // select available details
       const queryPlaceID = `SELECT Place_ID,Name,FormattedPhone,FormattedAddress,Latitude,Longitude,OverallRating,UserRatingTotal,ServesBeer,ServesWine,ServesVegetarianFood,WheelchairAccessibleEntrance,Halal,StreetAddress,District,City,Regency,Province,PostalNumber FROM Places WHERE Place_ID = '${id}'`;
       detailPlace = (await this.mysqlDbService.getQuery(
         queryPlaceID,
@@ -275,9 +276,9 @@ export class MysqlDbController {
           services.push(service.value);
         }
       }
-    } catch {
+    } catch (e) {
       console.log('error while getting detail place');
-      return this.writeErrorMessage('Place not found');
+      return this.writeErrorMessage(e.message);
     }
 
     try {
@@ -304,9 +305,9 @@ export class MysqlDbController {
 
       open = operationHoursToday;
       close = operationHoursTodayClose;
-    } catch {
+    } catch (e) {
       console.log('error while getting operation hours');
-      return this.writeErrorMessage('Place not found');
+      return this.writeErrorMessage(e.message);
     }
 
     try {
@@ -325,9 +326,9 @@ export class MysqlDbController {
       } else if (categories[0].Restaurant) {
         listCategory.push('restaurant');
       }
-    } catch {
+    } catch (e) {
       console.log('error while getting categories');
-      return this.writeErrorMessage('Place not found');
+      return this.writeErrorMessage(e.message);
     }
 
     // get photo reference
@@ -367,6 +368,85 @@ export class MysqlDbController {
       reviews,
     };
     return dataAPI;
+  }
+
+  @Post('auth/login')
+  async login(@Body() body: { email: string; password: string }) {
+    const { email, password } = body;
+    console.log(email, password);
+
+    type User = {
+      User_ID: string;
+      FullName: string;
+      Email: string;
+      Password: string;
+    };
+    try {
+      const query = `SELECT * FROM User WHERE Email = '${email}' AND Password = '${password}'`;
+      const user: User[] = (await this.mysqlDbService.getQuery(
+        query,
+      )) as User[];
+      if (user.length === 0) {
+        throw new Error('User not found');
+      }
+      return {
+        error: false,
+        data: user,
+      };
+    } catch (e) {
+      return {
+        error: true,
+        message: e.message,
+      };
+    }
+  }
+
+  @Post('auth/register')
+  async register(
+    @Body() body: { email: string; password: string; fullname: string },
+  ) {
+    const { email, password, fullname } = body;
+
+    if (!email || !password || !fullname) {
+      return {
+        error: true,
+        message: 'Please fill all the fields',
+      };
+    }
+
+    type User = {
+      User_ID: string;
+      FullName: string;
+      Email: string;
+      Password: string;
+    };
+    try {
+      const userId = nanoid(16);
+      // check if email already exist
+      const queryCheckEmail = `SELECT * FROM User WHERE Email = '${email}'`;
+      const checkEmail: User[] = (await this.mysqlDbService.getQuery(
+        queryCheckEmail,
+      )) as User[];
+      if (checkEmail.length > 0) {
+        throw new Error('Email already exist');
+      }
+      const query = `INSERT INTO User (User_ID, FullName, Email, Password) VALUES ('${userId}','${fullname}', '${email}', '${password}')`;
+      const user: User[] = (await this.mysqlDbService.getQuery(
+        query,
+      )) as User[];
+      if (user.length === 0) {
+        throw new Error('User not found');
+      }
+      return {
+        error: false,
+        message: 'Success register user',
+      };
+    } catch (e) {
+      return {
+        error: true,
+        message: e.message,
+      };
+    }
   }
 
   @Get('redis')
