@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { MysqlDbService } from './mysql-db.service';
 import { RedisCacheService } from '../redis-cache/redis-cache.service';
 import axios from 'axios';
@@ -33,8 +33,9 @@ export class MysqlDbController {
     };
   }
 
-  @Get('recomendation-place')
-  async getRecomendationPlace() {
+  @Get('recomendation-place/:id')
+  async getRecomendationPlace(@Param('id') id: string) {
+    console.log(id);
     type Place = {
       place_id: string;
       name: string;
@@ -79,7 +80,70 @@ export class MysqlDbController {
           const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
           place.photoReference = url;
         } catch {
-          place.photoReference = '';
+          place.photoReference =
+            'https://source.unsplash.com/random/400%C3%97400/?place';
+          console.log('error while getting photo reference');
+        }
+      }
+    } catch {
+      error = true;
+      console.log('error while getting recomendation place');
+    }
+    return {
+      error,
+      data,
+    };
+  }
+
+  @Get('nearby-place/:id')
+  async getNearbyPlace(@Param('id') id: string) {
+    console.log(id);
+    type Place = {
+      place_id: string;
+      name: string;
+      Latitude: number;
+      Longitude: number;
+      OverallRating: number;
+      UserRatingTotal: number;
+      StreetAddress: string | null;
+      District: string | null;
+      City: string | null;
+      Regency: string | null;
+      Province: string | null;
+      photoReference?: string;
+    };
+    let error = false;
+    const query =
+      'SELECT place_id,name,Latitude,Longitude,OverallRating, UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places ORDER BY RAND() LIMIT 5';
+    let data: Place[];
+    try {
+      data = (await this.mysqlDbService.getQuery(query)) as Place[];
+      for (const place of data) {
+        let referenceBuffer: string | null;
+        try {
+          const stringId = 'photo-reference:' + place.place_id;
+          referenceBuffer = await this.redisCacheService.getCache(stringId);
+        } catch {
+          console.log('error while getting referenceBuffer');
+        }
+        try {
+          let photoReference: string;
+          if (!referenceBuffer) {
+            photoReference = (await this.getPlacePhotoReference(
+              place.place_id,
+            )) as string;
+            await this.redisCacheService.setCache(
+              `photo-reference:${place.place_id}`,
+              photoReference,
+            );
+          } else {
+            photoReference = referenceBuffer;
+          }
+          const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
+          place.photoReference = url;
+        } catch {
+          place.photoReference =
+            'https://source.unsplash.com/random/400%C3%97400/?place';
           console.log('error while getting photo reference');
         }
       }
