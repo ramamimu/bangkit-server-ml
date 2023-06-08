@@ -6,6 +6,23 @@
 https://sql-server-oislxufxaa-et.a.run.app
 ```
 
+### _error_
+
+Each response always contains error information in `error` variable. If `error` is `true` indicating an error occurred.
+
+- response
+  ```typescript
+  {
+    error: boolean,
+    message: string
+  }
+  ```
+
+<br/>
+<br/>
+
+> ## For Android
+
 ### _Recommendation Places_
 
 ```http
@@ -120,34 +137,72 @@ GET /api/detail-place/:place_id
 }
 ```
 
-###
+<br/>
+<br/>
 
-### _Query to MySQL_
+> ## For Main Server
+
+### _login_
 
 ```http
-POST /api/query
+POST /api/auth/login
 ```
 
 - method
-  - `POST`
+
+  - POST
+
 - body
-  ```javascript
+  ```typescript
   {
-    query: string,
+    email: string,
+    password: string
   }
   ```
 - response
+  ```typescript
+  {
+    "error": boolean,
+    "data": [
+      {
+        "User_ID": string,
+        "FullName": string,
+        "Email": string,
+        "Password": string
+      }
+    ]
+  }
+  ```
 
+### _register_
+
+```http
+POST /api/auth/register
+```
+
+- method
+
+  - POST
+
+- body
+  ```typescript
+  {
+    email: string,
+    password: string,
+    fullname: string
+  }
+  ```
+- response
   ```typescript
   {
     error: boolean,
-    data: array
+    message: string
   }
   ```
 
 ## Table structure
 
-> Places
+> places
 
 | Field                        | Type         | Null | Key | Default | Extra |
 | ---------------------------- | ------------ | ---- | --- | ------- | ----- |
@@ -173,7 +228,7 @@ POST /api/query
 | Province                     | varchar(255) | YES  |     | NULL    |       |
 | PostalNumber                 | varchar(25)  | YES  |     | NULL    |       |
 
-> OperationHours
+> operation hours
 
 | Field           | Type        | Null | Key | Default | Extra |
 | --------------- | ----------- | ---- | --- | ------- | ----- |
@@ -193,7 +248,7 @@ POST /api/query
 | Sunday_Open     | char(5)     | YES  |     | NULL    |       |
 | Sunday_Close    | char(5)     | YES  |     | NULL    |       |
 
-> Types
+> types
 
 | Field      | Type        | Null | Key | Default | Extra |
 | ---------- | ----------- | ---- | --- | ------- | ----- |
