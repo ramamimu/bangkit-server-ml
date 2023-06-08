@@ -68,7 +68,7 @@ GET /api/nearby-place/:id_user
   }
   ```
 
-### _Detail Place_
+### _Detail Places_
 
 ```http
 GET /api/detail-place/:place_id
