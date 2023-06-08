@@ -1,7 +1,131 @@
 ## Documentation API
 
+### _link_
+
+```https
+https://sql-server-oislxufxaa-et.a.run.app
+```
+
+### _Recommendation Places_
+
 ```http
-POST https://sql-server-oislxufxaa-et.a.run.app/api/query
+GET /api/recomendation-place/:id_user
+```
+
+- method
+  - GET
+- response
+  ```typescript
+  {
+    error: boolean,
+    data: [
+      {
+        place_id: string,
+        name: string,
+        Latitude: number,
+        Longitude: number,
+        OverallRating: number,
+        UserRatingTotal: number,
+        StreetAddress: string | null,
+        District: string | null,
+        City: string | null,
+        Regency: string | null,
+        Province: string | null,
+        photoReference: string
+      }
+    ]
+  }
+  ```
+
+### _Nearby Places_
+
+```http
+GET /api/nearby-place/:id_user
+```
+
+- method
+  - GET
+- response
+  ```typescript
+  {
+    error: boolean,
+    data: [
+      {
+        place_id: string,
+        name: string,
+        Latitude: number,
+        Longitude: number,
+        OverallRating: number,
+        UserRatingTotal: number,
+        StreetAddress: string | null,
+        District: string | null,
+        City: string | null,
+        Regency: string | null,
+        Province: string | null,
+        photoReference: string
+      }
+    ]
+  }
+  ```
+
+### _Detail Place_
+
+```http
+GET /api/detail-place/:place_id
+```
+
+- method:
+
+  - GET
+
+- response
+
+```typescript
+{
+  error: boolean
+  overview: [
+    {
+      Place_ID: string,
+      Name: string,
+      FormattedPhone: string,
+      FormattedAddress: string | null,
+      Latitude: number,
+      Longitude: number,
+      OverallRating: number,
+      UserRatingTotal: number,
+      StreetAddress: string | null,
+      District: string | null,
+      City: string | null,
+      Regency: string | null,
+      Province: string | null,
+      PostalNumber: string | null,
+      images:[string],
+      open: string | null,
+      close: string | null,
+    }
+  ],
+  tags: [
+    {
+      categories:[string],
+      services:[string],
+    }
+  ],
+  reviews: [
+    {
+      name: string,
+      date: string,
+      review: string,
+    }
+  ],
+}
+```
+
+###
+
+### _Query to MySQL_
+
+```http
+POST /api/query
 ```
 
 - method
@@ -14,7 +138,7 @@ POST https://sql-server-oislxufxaa-et.a.run.app/api/query
   ```
 - response
 
-  ```javascript
+  ```typescript
   {
     error: boolean,
     data: array
