@@ -208,6 +208,7 @@ export class MysqlDbController {
     };
     type Overview = Place & SubOverview;
     type DataAPI = {
+      error: boolean;
       overview: Overview[];
       tags: {
         categories: string[];
@@ -262,7 +263,7 @@ export class MysqlDbController {
 
     try {
       // select available detail
-      const queryPlaceID = `SELECT * FROM Places WHERE Place_ID = '${id}'`;
+      const queryPlaceID = `SELECT Place_ID,Name,FormattedPhone,FormattedAddress,Latitude,Longitude,OverallRating,UserRatingTotal,ServesBeer,ServesWine,ServesVegetarianFood,WheelchairAccessibleEntrance,Halal,StreetAddress,District,City,Regency,Province,PostalNumber FROM Places WHERE Place_ID = '${id}'`;
       detailPlace = (await this.mysqlDbService.getQuery(
         queryPlaceID,
       )) as DetailPlaceTable[];
@@ -301,15 +302,8 @@ export class MysqlDbController {
       const operationHoursToday = operationHours[0][`${dayString}_Open`];
       const operationHoursTodayClose = operationHours[0][`${dayString}_Close`];
 
-      // get the current time
-      const currentTime = new Date().toLocaleTimeString('en-US', {
-        hour12: false,
-        hour: 'numeric',
-        minute: 'numeric',
-      });
-      // logic open and close today
-      open = operationHoursToday <= currentTime;
-      close = operationHoursTodayClose <= currentTime;
+      open = operationHoursToday;
+      close = operationHoursTodayClose;
     } catch {
       console.log('error while getting operation hours');
       return this.writeErrorMessage('Place not found');
@@ -355,6 +349,7 @@ export class MysqlDbController {
 
     // logic DataAPI
     const dataAPI: DataAPI = {
+      error: false,
       overview: [
         {
           ...detailPlace[0],
