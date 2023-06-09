@@ -440,15 +440,34 @@ export class MysqlDbController {
 
   @Post('auth/register')
   async register(
-    @Body() body: { email: string; password: string; fullname: string },
+    @Body()
+    body: {
+      email: string;
+      password: string;
+      fullname: string;
+      latitude: number;
+      longitude: number;
+    },
   ) {
-    const { email, password, fullname } = body;
+    const { email, password, fullname, latitude, longitude } = body;
 
     if (!email || !password || !fullname) {
       return {
         error: true,
         message: 'Please fill all the fields',
       };
+    }
+
+    let Latitude: number, Longitude: number;
+    if (!latitude || !longitude) {
+      // generate Latitude and Longitude around Yogyakarta
+      const randomLatitude = Math.random() * (7.8 - 7.4) + 7.4;
+      const randomLongitude = Math.random() * (110.5 - 110.1) + 110.1;
+      Latitude = randomLatitude;
+      Longitude = randomLongitude;
+    } else {
+      Latitude = latitude;
+      Longitude = longitude;
     }
 
     type User = {
@@ -467,7 +486,7 @@ export class MysqlDbController {
       if (checkEmail.length > 0) {
         throw new Error('Email already exist');
       }
-      const query = `INSERT INTO User (User_ID, FullName, Email, Password) VALUES ('${userId}','${fullname}', '${email}', '${password}')`;
+      const query = `INSERT INTO User (User_ID, FullName, Email, Password, Latitude, Longitude) VALUES ('${userId}','${fullname}', '${email}', '${password}', '${Latitude}', '${Longitude}')`;
       const user: User[] = (await this.mysqlDbService.getQuery(
         query,
       )) as User[];
