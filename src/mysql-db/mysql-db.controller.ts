@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { MysqlDbService } from './mysql-db.service';
 import { RedisCacheService } from '../redis-cache/redis-cache.service';
 import axios from 'axios';
@@ -17,32 +17,20 @@ export class MysqlDbController {
     return 'Welcome to C23-PR513 API management!';
   }
 
-  @Post('query')
-  async getQuery(
-    @Body() body: { query: string },
-  ): Promise<{ error: boolean; data: any }> {
-    let error = false;
-    let data: any;
-    try {
-      data = await this.mysqlDbService.getQuery(body.query);
-    } catch {
-      error = true;
-    }
-    console.log(error ? 'failed query data' : 'success query data');
-    return {
-      error,
-      data,
-    };
+  @Get('recomendation-place/')
+  async getRecomendationPlace(
+    @Query('key') key: string,
+    @Query('type') type: string,
+  ) {
+    // dont forget for documentation toooo
+    if (!key) return this.writeErrorMessage('id not specified');
+    return await this.getPlaces(key, type);
   }
 
-  @Get('recomendation-place/:id')
-  async getRecomendationPlace(@Param('id') id: string) {
-    return await this.getPlaces(id);
-  }
-
-  @Get('nearby-place/:id')
-  async getNearbyPlace(@Param('id') id: string) {
-    return await this.getPlaces(id);
+  @Get('nearby-place/:id/:type_place')
+  async getNearbyPlace(@Query('key') key: string, @Query('type') type: string) {
+    if (!key) return this.writeErrorMessage('id not specified');
+    return await this.getPlaces(key, type);
   }
 
   @Get('detail-place/:id')
@@ -446,7 +434,7 @@ export class MysqlDbController {
     };
   }
 
-  async getPlaces(user_id: string) {
+  async getPlaces(user_id: string, type_place: string) {
     type Place = {
       place_id: string;
       name: string;
@@ -464,8 +452,21 @@ export class MysqlDbController {
       distanceTime: number;
     };
     let error = false;
-    const query =
-      'SELECT place_id,name,Latitude,Longitude,OverallRating, UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places ORDER BY RAND() LIMIT 5';
+    let query = `SELECT place_id,name,Latitude,Longitude,OverallRating,UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places`;
+    let tempQuery = '';
+    if (type_place == 'cafe') {
+      tempQuery = `SELECT Place_ID FROM Types WHERE Cafe = 1 `;
+    } else if (type_place == 'bar') {
+      tempQuery = `SELECT Place_ID FROM Types WHERE Bar = 1 `;
+    } else if (type_place == 'restaurant') {
+      tempQuery = `SELECT Place_ID FROM Types WHERE Restaurant = 1 `;
+    }
+
+    if (tempQuery !== '') {
+      query = `${query} WHERE Place_ID in (${tempQuery})`;
+    }
+    query = `${query} ORDER BY RAND() LIMIT 5`;
+
     let data: Place[];
     const posUser = `SELECT Latitude, Longitude FROM User WHERE User_ID = '${user_id}'`;
 
@@ -475,6 +476,8 @@ export class MysqlDbController {
           Latitude: number;
           Longitude: number;
         }[];
+
+      if (userPos.length < 1) throw new Error('user not found');
       const userLatitude = userPos[0].Latitude;
       const userLongitude = userPos[0].Longitude;
 
@@ -527,7 +530,7 @@ export class MysqlDbController {
     } catch (e) {
       error = true;
       console.log(e.message);
-      console.log('error while getting recomendation place');
+      return this.writeErrorMessage(e.message);
     }
     return {
       error,

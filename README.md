@@ -18,6 +18,32 @@ Each response always contains error information in `error` variable. If `error` 
   }
   ```
 
+### _optional variable_
+
+Optional variable will sign with `?` in paramater documentation, For example
+
+```typescript
+GET /api/?key=asdmlakm32SxsA&value=opiSjk
+```
+
+> NOTE: `?` after `/` in endpoint just indicates that is a starting parameter. The `?` which means is in a paramaters documentation, for example.
+
+- parameters
+  - key: string
+  - value?: string
+
+it means that `value` is optional to include in the url.
+
+> NOTE:
+
+```typescript
+in this case, you allow to write url without `value`, for example:
+
+/api/?key=asdmlakm32SxsA
+
+so, make sure different a starting in urls parameter and explanation in documentation.
+```
+
 <br/>
 <br/>
 
@@ -26,11 +52,14 @@ Each response always contains error information in `error` variable. If `error` 
 ### _Recommendation Places_
 
 ```http
-GET /api/recomendation-place/:id_user
+GET /api/recomendation-place/?key=user_id&type=type_place
 ```
 
 - method
   - GET
+- parameters
+  - key: user_id
+  - type?: bar | restaurant | cafe
 - response
   ```typescript
   {
@@ -48,9 +77,9 @@ GET /api/recomendation-place/:id_user
         City: string | null,
         Regency: string | null,
         Province: string | null,
-        photoReference: string,
         distance: number,
-        distanceTimer: number
+        distanceTime: number,
+        photoReference: string
       }
     ]
   }
@@ -59,11 +88,14 @@ GET /api/recomendation-place/:id_user
 ### _Nearby Places_
 
 ```http
-GET /api/nearby-place/:id_user
+GET /api/nearby-place/?key=user_id&type=type_place
 ```
 
 - method
   - GET
+- parameters
+  - key: user_id
+  - type?: bar | restaurant | cafe
 - response
   ```typescript
   {
@@ -81,6 +113,8 @@ GET /api/nearby-place/:id_user
         City: string | null,
         Regency: string | null,
         Province: string | null,
+        distance: number | null,
+        distanceTime: number | null,
         photoReference: string
       }
     ]
@@ -135,7 +169,7 @@ GET /api/detail-place/:place_id
       date: string,
       review: string,
     }
-  ],
+  ]
 }
 ```
 
