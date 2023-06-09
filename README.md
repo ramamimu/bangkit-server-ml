@@ -48,7 +48,9 @@ GET /api/recomendation-place/:id_user
         City: string | null,
         Regency: string | null,
         Province: string | null,
-        photoReference: string
+        photoReference: string,
+        distance: number,
+        distanceTimer: number
       }
     ]
   }

@@ -3,6 +3,7 @@ import { MysqlDbService } from './mysql-db.service';
 import { RedisCacheService } from '../redis-cache/redis-cache.service';
 import axios from 'axios';
 import { nanoid } from 'nanoid';
+import * as geolib from 'geolib';
 
 @Controller('api')
 export class MysqlDbController {
@@ -36,126 +37,12 @@ export class MysqlDbController {
 
   @Get('recomendation-place/:id')
   async getRecomendationPlace(@Param('id') id: string) {
-    console.log(id);
-    type Place = {
-      place_id: string;
-      name: string;
-      Latitude: number;
-      Longitude: number;
-      OverallRating: number;
-      UserRatingTotal: number;
-      StreetAddress: string | null;
-      District: string | null;
-      City: string | null;
-      Regency: string | null;
-      Province: string | null;
-      photoReference?: string;
-    };
-    let error = false;
-    const query =
-      'SELECT place_id,name,Latitude,Longitude,OverallRating, UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places ORDER BY RAND() LIMIT 5';
-    let data: Place[];
-    try {
-      data = (await this.mysqlDbService.getQuery(query)) as Place[];
-      for (const place of data) {
-        let referenceBuffer: string | null;
-        try {
-          const stringId = 'photo-reference:' + place.place_id;
-          referenceBuffer = await this.redisCacheService.getCache(stringId);
-        } catch {
-          console.log('error while getting referenceBuffer');
-        }
-        try {
-          let photoReference: string;
-          if (!referenceBuffer) {
-            photoReference = (
-              await this.getPlacePhotoReference(place.place_id)
-            )[0].photo_reference as string;
-            await this.redisCacheService.setCache(
-              `photo-reference:${place.place_id}`,
-              photoReference,
-            );
-          } else {
-            photoReference = referenceBuffer;
-          }
-          const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
-          place.photoReference = url;
-        } catch {
-          place.photoReference =
-            'https://source.unsplash.com/random/400%C3%97400/?place';
-          console.log('error while getting photo reference');
-        }
-      }
-    } catch {
-      error = true;
-      console.log('error while getting recomendation place');
-    }
-    return {
-      error,
-      data,
-    };
+    return await this.getPlaces(id);
   }
 
   @Get('nearby-place/:id')
   async getNearbyPlace(@Param('id') id: string) {
-    console.log(id);
-    type Place = {
-      place_id: string;
-      name: string;
-      Latitude: number;
-      Longitude: number;
-      OverallRating: number;
-      UserRatingTotal: number;
-      StreetAddress: string | null;
-      District: string | null;
-      City: string | null;
-      Regency: string | null;
-      Province: string | null;
-      photoReference?: string;
-    };
-    let error = false;
-    const query =
-      'SELECT place_id,name,Latitude,Longitude,OverallRating, UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places ORDER BY RAND() LIMIT 5';
-    let data: Place[];
-    try {
-      data = (await this.mysqlDbService.getQuery(query)) as Place[];
-      for (const place of data) {
-        let referenceBuffer: string | null;
-        try {
-          const stringId = 'photo-reference:' + place.place_id;
-          referenceBuffer = await this.redisCacheService.getCache(stringId);
-        } catch {
-          console.log('error while getting referenceBuffer');
-        }
-        try {
-          let photoReference: string;
-          if (!referenceBuffer) {
-            photoReference = (
-              await this.getPlacePhotoReference(place.place_id)
-            )[0].photo_reference as string;
-            await this.redisCacheService.setCache(
-              `photo-reference:${place.place_id}`,
-              photoReference,
-            );
-          } else {
-            photoReference = referenceBuffer;
-          }
-          const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
-          place.photoReference = url;
-        } catch {
-          place.photoReference =
-            'https://source.unsplash.com/random/400%C3%97400/?place';
-          console.log('error while getting photo reference');
-        }
-      }
-    } catch {
-      error = true;
-      console.log('error while getting recomendation place');
-    }
-    return {
-      error,
-      data,
-    };
+    return await this.getPlaces(id);
   }
 
   @Get('detail-place/:id')
@@ -557,5 +444,129 @@ export class MysqlDbController {
       error: true,
       message: msg,
     };
+  }
+
+  async getPlaces(user_id: string) {
+    type Place = {
+      place_id: string;
+      name: string;
+      Latitude: number;
+      Longitude: number;
+      OverallRating: number;
+      UserRatingTotal: number;
+      StreetAddress: string | null;
+      District: string | null;
+      City: string | null;
+      Regency: string | null;
+      Province: string | null;
+      photoReference?: string;
+      distance: number;
+      distanceTime: number;
+    };
+    let error = false;
+    const query =
+      'SELECT place_id,name,Latitude,Longitude,OverallRating, UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places ORDER BY RAND() LIMIT 5';
+    let data: Place[];
+    const posUser = `SELECT Latitude, Longitude FROM User WHERE User_ID = '${user_id}'`;
+
+    try {
+      const userPos: { Latitude: number; Longitude: number }[] =
+        (await this.mysqlDbService.getQuery(posUser)) as {
+          Latitude: number;
+          Longitude: number;
+        }[];
+      const userLatitude = userPos[0].Latitude;
+      const userLongitude = userPos[0].Longitude;
+
+      if (userLatitude == null || userLongitude == null) {
+        throw new Error('User not found');
+      }
+
+      data = (await this.mysqlDbService.getQuery(query)) as Place[];
+
+      for (const place of data) {
+        let referenceBuffer: string | null;
+        try {
+          const stringId = 'photo-reference:' + place.place_id;
+          referenceBuffer = await this.redisCacheService.getCache(stringId);
+        } catch {
+          console.log('error while getting referenceBuffer');
+        }
+        try {
+          // get distance
+          const distance = geolib.getDistance(
+            { latitude: userLatitude, longitude: userLongitude },
+            { latitude: place.Latitude, longitude: place.Longitude },
+          );
+          place.distance = this.meterToKm(distance);
+          place.distanceTime = parseFloat(
+            this.getDistanceTime(distance).toFixed(2),
+          );
+
+          // get photo reference
+          let photoReference: string;
+          if (!referenceBuffer) {
+            photoReference = (
+              await this.getPlacePhotoReference(place.place_id)
+            )[0].photo_reference as string;
+            await this.redisCacheService.setCache(
+              `photo-reference:${place.place_id}`,
+              photoReference,
+            );
+          } else {
+            photoReference = referenceBuffer;
+          }
+          const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${process.env.MAPS_API_KEY}`;
+          place.photoReference = url;
+        } catch {
+          place.photoReference =
+            'https://source.unsplash.com/random/400%C3%97400/?place';
+          console.log('error while getting photo reference');
+        }
+      }
+    } catch (e) {
+      error = true;
+      console.log(e.message);
+      console.log('error while getting recomendation place');
+    }
+    return {
+      error,
+      data,
+    };
+  }
+
+  getDistance(
+    userPosition: {
+      latitude: number;
+      longitude: number;
+    },
+    placePosition: {
+      latitude: number;
+      longitude: number;
+    },
+  ) {
+    const distance = geolib.getDistance(
+      {
+        latitude: userPosition.latitude,
+        longitude: userPosition.longitude,
+      },
+      {
+        latitude: placePosition.latitude,
+        longitude: placePosition.longitude,
+      },
+    );
+    return distance;
+  }
+
+  // estimation time in minutes
+  getDistanceTime(distance: number): number {
+    // 1.9 km = 6 min
+    // 1 km = 3.1578947368421053 min
+    const time = (distance / 1000) * 3;
+    return time;
+  }
+
+  meterToKm(meter: number) {
+    return meter / 1000;
   }
 }
