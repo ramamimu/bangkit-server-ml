@@ -7,5 +7,6 @@ import { RedisCacheModule } from 'src/redis-cache/redis-cache.module';
   controllers: [MysqlDbController],
   providers: [MysqlDbService],
   imports: [RedisCacheModule],
+  exports: [MysqlDbService],
 })
 export class MysqlDbModule {}
