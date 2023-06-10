@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { MysqlDbService } from './mysql-db.service';
 
-@Controller('/')
+@Controller()
 export class MysqlDbController {
   constructor(private readonly mysqlDbService: MysqlDbService) {}
 
