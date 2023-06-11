@@ -52,14 +52,13 @@ so, make sure different a starting in urls parameter and explanation in document
 ### _Recommendation Places_
 
 ```http
-GET /api/recomendation-place/?key=user_id&type=type_place
+GET /api/recomendation-place/?key=user_id
 ```
 
 - method
   - GET
 - parameters
   - key: user_id
-  - type?: bar | restaurant | cafe
 - response
   ```typescript
   {
@@ -79,42 +78,6 @@ GET /api/recomendation-place/?key=user_id&type=type_place
         Province: string | null,
         distance: number,
         distanceTime: number,
-        photoReference: string
-      }
-    ]
-  }
-  ```
-
-### _Nearby Places_
-
-```http
-GET /api/nearby-place/?key=user_id&type=type_place
-```
-
-- method
-  - GET
-- parameters
-  - key: user_id
-  - type?: bar | restaurant | cafe
-- response
-  ```typescript
-  {
-    error: boolean,
-    data: [
-      {
-        place_id: string,
-        name: string,
-        Latitude: number,
-        Longitude: number,
-        OverallRating: number,
-        UserRatingTotal: number,
-        StreetAddress: string | null,
-        District: string | null,
-        City: string | null,
-        Regency: string | null,
-        Province: string | null,
-        distance: number | null,
-        distanceTime: number | null,
         photoReference: string
       }
     ]
