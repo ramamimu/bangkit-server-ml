@@ -166,8 +166,8 @@ GET /api/detail-place/:place_id
   reviews: [
     {
       name: string,
-      date: string,
-      review: string,
+      star: number,
+      reviewtext: string,
     }
   ]
 }

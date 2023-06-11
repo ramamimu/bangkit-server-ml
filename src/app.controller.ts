@@ -14,18 +14,15 @@ export class AppController {
   ) {}
 
   @Get('recomendation-place/')
-  async getRecomendationPlace(
-    @Query('key') key: string,
-    @Query('type') type: string,
-  ) {
+  async getRecomendationPlace(@Query('key') key: string) {
     if (!key) return this.appService.writeErrorMessage('id not specified');
-    return await this.getPlaces(key, type);
+    return await this.getPlaces(key);
   }
 
   @Get('nearby-place/:id/:type_place')
-  async getNearbyPlace(@Query('key') key: string, @Query('type') type: string) {
+  async getNearbyPlace(@Query('key') key: string) {
     if (!key) return this.appService.writeErrorMessage('id not specified');
-    return await this.getPlaces(key, type);
+    return await this.getPlaces(key);
   }
 
   @Get('detail-place/:id')
@@ -82,6 +79,11 @@ export class AppController {
       Sunday_Close?: string;
     };
     type Overview = Place & SubOverview;
+    type Review = {
+      name: string;
+      star: number;
+      ReviewText: string;
+    };
     type DataAPI = {
       error: boolean;
       overview: Overview[];
@@ -89,11 +91,7 @@ export class AppController {
         categories: string[];
         services: string[];
       }[];
-      reviews: {
-        name: string;
-        date: Date;
-        review: string;
-      }[];
+      reviews: Review[];
     };
     type DetailPlaceTable = Place & Categories;
 
@@ -127,14 +125,14 @@ export class AppController {
     const services: string[] = [];
     const listCategory: string[] = [];
     const images: string[] = [];
-    const reviews = [
-      {
-        name: 'John Doe',
-        date: new Date(),
-        review:
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla euismod, nisl vitae aliquam ultricies, nunc nisl ultricies nunc, vitae aliqua',
-      },
-    ];
+
+    let reviews: Review[];
+    try {
+      const queryReviews = `SELECT name,star,reviewtext FROM Reviews WHERE place_id = '${id}'`;
+      reviews = (await this.mysqlDbService.getQuery(queryReviews)) as Review[];
+    } catch (e) {
+      console.log(e.message);
+    }
 
     try {
       // select available details
@@ -346,7 +344,7 @@ export class AppController {
       Password: string;
     };
     try {
-      const userId = nanoid(16);
+      const userId = nanoid(3);
       // check if email already exist
       const queryCheckEmail = `SELECT * FROM User WHERE Email = '${email}'`;
       const checkEmail: User[] = (await this.mysqlDbService.getQuery(
@@ -399,7 +397,7 @@ export class AppController {
     });
   }
 
-  async getPlaces(user_id: string, type_place: string) {
+  async getPlaces(user_id: string) {
     type Place = {
       place_id: string;
       name: string;
@@ -417,20 +415,7 @@ export class AppController {
       distanceTime: number;
     };
     let error = false;
-    let query = `SELECT place_id,name,Latitude,Longitude,OverallRating,UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places`;
-    let tempQuery = '';
-    if (type_place == 'cafe') {
-      tempQuery = `SELECT Place_ID FROM Types WHERE Cafe = 1 `;
-    } else if (type_place == 'bar') {
-      tempQuery = `SELECT Place_ID FROM Types WHERE Bar = 1 `;
-    } else if (type_place == 'restaurant') {
-      tempQuery = `SELECT Place_ID FROM Types WHERE Restaurant = 1 `;
-    }
-
-    if (tempQuery !== '') {
-      query = `${query} WHERE Place_ID in (${tempQuery})`;
-    }
-    query = `${query} ORDER BY RAND() LIMIT 5`;
+    const query = `SELECT place_id,name,Latitude,Longitude,OverallRating,UserRatingTotal,StreetAddress,District,City,Regency,Province FROM Places where place_id in (SELECT place_id FROM Recommendation WHERE user_id = '${user_id}')`;
 
     let data: Place[];
     const posUser = `SELECT Latitude, Longitude FROM User WHERE User_ID = '${user_id}'`;
