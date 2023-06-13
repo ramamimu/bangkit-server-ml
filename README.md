@@ -47,8 +47,6 @@ so, make sure different a starting in urls parameter and explanation in document
 <br/>
 <br/>
 
-> ## For Android
-
 ### _Recommendation Places_
 
 ```http
